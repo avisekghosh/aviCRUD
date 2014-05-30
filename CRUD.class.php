@@ -1,4 +1,7 @@
 <?php
+define( "DB_DSN", "your DSN" );
+define( "DB_USERNAME", "your username" );
+define( "DB_PASSWORD", "your password" );
 class CRUD{
 
 		public static function getRow($tableName, $idFieldName, $idValue, $data=false, $limit=false)
