@@ -1,26 +1,33 @@
 <?php
+require_once("conn.php");
 class CRUD{
 
-		public static function getRow($tableName, $idFieldName, $idValue, $data=false, $limit=false)
+		public static function getRow($tableName, $idFieldName=false, $idValue=false, $data=false, $limit=false)
 		{
-			$conn = new PDO( DB_DSN, DB_USERNAME, DB_PASSWORD );
+			$db = Database::getInstance();
+			$conn = $db->getConnection(); 
 			$return = false;
 			$sql="";
 			$sqlRetriveField="";
 			$sqlRetriveField=($data!=false) ? CRUD::sqlFieldCreator($data) : "*";	
-			$sql=($limit==false) ? "SELECT ".$sqlRetriveField." FROM ".$tableName." WHERE ".$idFieldName." = :id" : "SELECT ".$sqlRetriveField." FROM ".$tableName." WHERE ".$idFieldName." = :id ".$limit;
+			$sqlWhere=($idFieldName==false || $idValue==false) ? "" : "WHERE ".$idFieldName." = :id";
+			$sql=($limit==false) ? "SELECT ".$sqlRetriveField." FROM ".$tableName." ".$sqlWhere : "SELECT ".$sqlRetriveField." FROM ".$tableName." ".$sqlWhere." ".$limit;
 			$st = $conn->prepare ( $sql );
-			$pdoParam=CRUD::getPDOConstantType($idValue);
-			$st->bindValue( ":id", $idValue, $pdoParam );
+			if($idFieldName!=false || $idValue!=false)
+			{
+				$pdoParam=CRUD::getPDOConstantType($idValue);
+				$st->bindValue( ":id", $idValue, $pdoParam );
+			}
 			$st->execute();
-			$return=$st->fetch();
+			$return=$st->fetchAll();
 			$conn=null;
 			return $return;
 		} 
 		
 		public static function addRow($tableName, $data)
 		{
-			$conn = new PDO( DB_DSN, DB_USERNAME, DB_PASSWORD );
+			$db = Database::getInstance();
+			$conn = $db->getConnection(); 
 			$sql="";
 			$insertPartQuery=CRUD::sqlFieldCreator($data,"insert");
 			$sql="INSERT INTO ".$tableName." ".$insertPartQuery;
@@ -42,7 +49,8 @@ class CRUD{
 		
 		public static function deleteRow($tableName, $idFieldName, $idValue)
 		{
-			$conn = new PDO( DB_DSN, DB_USERNAME, DB_PASSWORD );
+			$db = Database::getInstance();
+			$conn = $db->getConnection(); 
 			$sql="DELETE FROM ".$tableName." WHERE ".$idFieldName."=:id";
 			$st = $conn->prepare ( $sql );
 			$pdoParam=CRUD::getPDOConstantType($idValue);
@@ -61,7 +69,8 @@ class CRUD{
 		
 		public static function updateRow($tableName,$idFieldName, $idValue, $data)
 		{
-			$conn= new PDO(DB_DSN, DB_USERNAME, DB_PASSWORD);
+			$db = Database::getInstance();
+			$conn = $db->getConnection(); 
 			$updateQueryPart=CRUD::sqlFieldCreator($data,"update");
 			$sql="UPDATE ".$tableName." ".$updateQueryPart." WHERE ".$idFieldName."=:id";
 			
@@ -76,10 +85,11 @@ class CRUD{
 		
 		public static function customSql($sql)
 		{
-			$conn = new PDO( DB_DSN, DB_USERNAME, DB_PASSWORD );
+			$db = Database::getInstance();
+			$conn = $db->getConnection(); 
 			$st = $conn->prepare ( $sql );
 			$st->execute();
-			$return=$st->fetch();
+			$return=$st->fetchAll();
 			return $return;
 		}
 		
